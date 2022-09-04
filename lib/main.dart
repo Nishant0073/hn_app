@@ -5,13 +5,16 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'src/article.dart';
+import 'src/hn_block.dart';
 
 void main() {
-  runApp(const MyApp());
+  final HackerNewsBloc hnBloc = HackerNewsBloc();
+  runApp(MyApp(block: hnBloc));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final HackerNewsBloc block;
+  const MyApp({Key? key, required this.block}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -19,13 +22,18 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(primarySwatch: Colors.deepOrange),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(
+        title: 'Flutter Demo Home Page',
+        hnBloc: block,
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  final HackerNewsBloc hnBloc;
+  const MyHomePage({Key? key, required this.title, required this.hnBloc})
+      : super(key: key);
 
   final String title;
 
@@ -63,24 +71,18 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: ListView(
-        children: _articles
-            .map(
-              (i) => FutureBuilder(
-                  future: _getArticle(i),
-                  builder: (context, AsyncSnapshot<Article?> snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      return _buildItem(snapshot.data);
-                    } else {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.orange,
-                        ),
-                      );
-                    }
-                  }),
-            )
-            .toList(),
+      body: StreamBuilder(
+        stream: widget.hnBloc.articles,
+        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+          if (snapshot.hasData) {
+            return ListView(
+              children:
+                  List<Widget>.from(snapshot.data.map(_buildItem).toList()),
+            );
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
       ),
     );
   }
@@ -109,7 +111,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           )
         ],
-        // onTap: () => _launchUri(article.url),
       ),
     );
   }
@@ -120,3 +121,22 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 }
+
+
+// children: _articles
+//             .map(
+//               (i) => FutureBuilder(
+//                   future: _getArticle(i),
+//                   builder: (context, AsyncSnapshot<Article?> snapshot) {
+//                     if (snapshot.connectionState == ConnectionState.done) {
+//                       return _buildItem(snapshot.data);
+//                     } else {
+//                       return Center(
+//                         child: CircularProgressIndicator(
+//                           color: Colors.orange,
+//                         ),
+//                       );
+//                     }
+//                   }),
+//             )
+//             .toList(),

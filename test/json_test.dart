@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hn_app/src/article.dart';
 import 'package:http/http.dart' as http;
@@ -30,14 +28,13 @@ void main() {
     final response = await http.get(url);
     // final jsonString = jsonDecode(response.toString());
     if (response.statusCode == 200) {
-      final ids = jsonDecode(response.body);
-      final idsList = List<int>.from(ids);
+      final idsList = parseTopStories(response.body);
       if (idsList.isNotEmpty) {}
       final storyUrl = Uri.https(
           'hacker-news.firebaseio.com', '/v0/item/${idsList.first}.json');
       final storyRes = await http.get(storyUrl);
       if (storyRes.statusCode == 200) {
-        expect(parseArticle(storyRes.body).by, "willdr");
+        expect(parseArticle(storyRes.body).by, isNotNull);
       }
 
       // expect(parseTopStories(jsonString).first, 32686580);
